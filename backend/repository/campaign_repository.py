@@ -1,9 +1,8 @@
-import uuid
 from typing import List, Optional
 
 from bson.objectid import ObjectId
 from db import get_db
-from models.campaign import CampaignCreate, CampaignInDB, CampaignUpdate
+from models.campaign import CampaignCreate
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
 COLLECTION = "campaigns"

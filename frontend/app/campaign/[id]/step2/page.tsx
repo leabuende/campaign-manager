@@ -32,7 +32,6 @@ export default function Step2Page() {
   const handleNext = async (data: any) => {
     setLoading(true);
     try {
-      console.log(data.content.id);
       const response = await fetch(`/api/campaigns/${campaignId}/step3/${data.content.id}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

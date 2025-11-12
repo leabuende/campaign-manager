@@ -72,3 +72,13 @@ class CampaignInDB(CampaignCreate):
 
 class CampaignOut(CampaignCreate):
     id: str
+
+
+class GenerateImagesRequest(BaseModel):
+    campaign_id: str
+    audience_id: str
+
+
+class UpdateImageRequest(BaseModel):
+    image_path: str
+    modification_prompt: str

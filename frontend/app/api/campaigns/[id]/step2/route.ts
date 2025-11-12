@@ -17,7 +17,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const data = await response.json();
-    console.log(data.audiences[0].content);
 
     return NextResponse.json(data);
   } catch (error) {
@@ -39,7 +38,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         campaign_id: campaignId,
-        audience_id,
+        audience_id: audience_id,
       }),
     });
 

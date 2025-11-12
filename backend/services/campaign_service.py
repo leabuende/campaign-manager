@@ -8,15 +8,8 @@ from models.campaign import CampaignAnalysis
 from PIL import Image
 from PyPDF2 import PdfReader
 from rembg import remove
-from repository.campaign_repository import CampaignRepository
-
-TEMP_FOLDER = "/tmp/campaign_uploads"
-os.makedirs(TEMP_FOLDER, exist_ok=True)
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-BASE_DIR = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "../../shared/uploads")
-)
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -87,7 +80,7 @@ Make the content creative, inclusive, and platform-appropriate, ensuring each au
 
 
 async def generate_background_prompt(
-    campaign_repo: CampaignRepository, campaign_description: str, audience_name: str
+    campaign_description: str, audience_name: str
 ) -> str:
     prompt_text = (
         f"Generate a detailed, realistic background description for a product photoshoot "
@@ -109,7 +102,6 @@ async def generate_background_prompt(
 
 
 def remove_product_background(input_path: str, output_path: str) -> str:
-    """Removes the background from the product image using rembg."""
     with Image.open(input_path) as img:
         output_image = remove(img, only_mask=False)
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
@@ -123,8 +115,6 @@ def generate_final_images(
     audience_id: str,
     prompt: str,
 ) -> List[str]:
-    """Generates AI images using Gemini with the cut-out product and following prompt:
-    context"""
     paths = []
 
     aspect_ratios = ["1:1", "3:4", "9:16"]
@@ -155,8 +145,6 @@ def generate_final_images(
                     print(
                         f"Saved image for aspect ratio {ratio} at: {image_output_path}"
                     )
-                    # TODO: Add update to database for audience
-
     return paths
 
 
