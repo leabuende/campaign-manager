@@ -33,7 +33,7 @@ export default function Step3Page() {
   const handleNext = async (data: any) => {
     setLoading(true);
     try {
-      router.push(`/campaign/${campaignId}/step4`);
+      router.push(`/campaign/${campaignId}/success`);
     } catch (error) {
       console.error("[v0] Step 3 save error:", error);
     } finally {

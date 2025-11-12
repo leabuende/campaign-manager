@@ -48,14 +48,19 @@ Analyze this campaign brief and generate:
 4. Target audiences (generate 2-4 distinct audience segments)
 
 For EACH target audience segment:
-- Create a unique ID (format: aud-1, aud-2, aud-3, etc.)
-- Define the audience name/demographic (e.g., "Women 25-35", "Tech-Savvy Millennials")
-- Generate tailored social media content:
-  * Instagram Caption: Create an engaging, platform-appropriate caption. Include a warning if the language could be perceived as exclusionary. Provide a confidence score (0-1) based on how well it fits the audience.
-  * TikTok Caption: Create a short, trendy caption with emojis. Provide a confidence score (0-1).
-  * Website Caption: Create a concise, informative caption for a website. Provide a confidence score (0-1).
+- Assign a unique ID (e.g., aud-1, aud-2, aud-3, etc.)
+- Define the audience name and demographic (e.g., "Women 25–35", "Tech-Savvy Millennials")
+- Generate tailored social media content specific to this audience:
+  * Instagram Caption: Write an engaging, visually-oriented caption aligned with Instagram’s aspirational tone.
+  * TikTok Caption: Write a short, trendy caption with emojis optimized for virality and cultural relevance.
+  * Website Caption: Write a concise, informative caption emphasizing clarity and product value.
 
-Make the content creative, diverse, and platform-appropriate. Ensure each audience segment has distinct messaging."""
+For each caption:
+- Include a confidence_score (0–1) indicating how well it fits the audience and platform, and be very critical of the content.
+- Add a warning if confidence_score < 0.9 and explain why.
+
+Make the content creative, inclusive, and platform-appropriate, ensuring each audience segment has distinct messaging and tone.
+"""
 
     try:
         response = client.models.generate_content(

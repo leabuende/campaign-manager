@@ -24,6 +24,7 @@ services:
       - MONGO_URI=mongodb://mongo:27017
       - DB_NAME=campaigns_db
       - UPLOADS_PATH=/app/uploads
+      - GEMINI_API_KEY=
     depends_on:
       - mongo
 

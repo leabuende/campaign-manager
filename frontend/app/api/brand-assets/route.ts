@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
       }),
     };
 
-    console.log("[v0] Asset uploaded:", asset);
+    console.log("Asset uploaded:", asset);
 
     return NextResponse.json({
       success: true,

@@ -36,7 +36,6 @@ export function Step3ImageLab({
       const found = campaignData.audiences.find((a: any) => a.id === selectedAudience);
       setAudience(found || null);
     }
-    console.log("campaignData:", campaignData);
   }, [campaignData, selectedAudience]);
 
   const handlePromptChange = (ratio: string, value: string) => {
@@ -57,7 +56,6 @@ export function Step3ImageLab({
   };
 
   const handleImageDoubleClick = () => {
-    console.log("selectedImage ", selectedImage);
     if (selectedImage) setPreviewImage(selectedImage);
   };
 

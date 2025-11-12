@@ -31,7 +31,6 @@ export default function NewCampaignPage() {
       if (!response.ok) throw new Error("Campaign creation failed");
 
       const result = await response.json();
-      console.log("result here :", result?.apiResponse);
       const campaignId = result?.apiResponse?.id;
 
       router.push(`/campaign/${campaignId}/step2`);

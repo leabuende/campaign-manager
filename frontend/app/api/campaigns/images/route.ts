@@ -13,10 +13,8 @@ export async function GET(req: NextRequest) {
       .map((dir) => {
         const folderPath = path.join(UPLOADS_PATH, dir.name);
 
-        // Read folder contents
         let files: { name: string; url: string }[] = [];
 
-        // Loop over items in the folder
         const items = fs.readdirSync(folderPath, { withFileTypes: true });
         for (const item of items) {
           const itemPath = path.join(folderPath, item.name);
@@ -25,7 +23,6 @@ export async function GET(req: NextRequest) {
             files.push({ name: item.name, url: `${PUBLIC_URL_PREFIX}/${dir.name}/${item.name}` });
           }
 
-          // If item is a subfolder (like "generated"), include its PNG files too
           if (item.isDirectory()) {
             const subFiles = fs
               .readdirSync(itemPath, { withFileTypes: true })

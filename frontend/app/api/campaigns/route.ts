@@ -33,16 +33,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Missing files" }, { status: 400 });
     }
 
-    // Prepare data for FastAPI request
     const apiFormData = new FormData();
     apiFormData.append("pdf", brief);
-    apiFormData.append("image", productImages[0]); // send only first image (or loop if needed)
+    apiFormData.append("image", productImages[0]);
     apiFormData.append("name", name);
     apiFormData.append("description", description);
 
-    console.log("[v0] Sending to FastAPI:", `${API_BASE_URL}/campaigns/process_brief`);
+    console.log("Sending to FastAPI:", `${API_BASE_URL}/campaigns/process_brief`);
 
-    // Call your FastAPI endpoint
     const response = await fetch(`${API_BASE_URL}/campaigns/process_brief`, {
       method: "POST",
       body: apiFormData,

@@ -10,7 +10,7 @@ interface Step4SuccessProps {
 
 export function Step4Success({ onBack }: Step4SuccessProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full p-6">
       <ProgressStep stepNumber={4} title="Campaign Launched" description="Your campaign is live!" />
 
       <div className="flex-1 flex items-center justify-center">

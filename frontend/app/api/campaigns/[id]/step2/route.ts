@@ -5,7 +5,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-    console.log(`[v0] Fetching campaign from ${API_BASE_URL}/campaigns/${id}`);
+    console.log(`Fetching campaign from ${API_BASE_URL}/campaigns/${id}`);
 
     const response = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
       method: "GET",
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     const campaignId = params.id;
     const { audience_id } = await request.json();
 
-    console.log("[v0] Forwarding image generation request:", { campaignId, audience_id });
+    console.log("Forwarding image generation request:", { campaignId, audience_id });
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
     const response = await fetch(`${API_BASE_URL}/campaigns/generate_images`, {
