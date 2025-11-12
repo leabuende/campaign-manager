@@ -2,8 +2,7 @@
 
 ![Screenshot](./screenshot.png)
 
-Lea Beauty Campaign Generator is the ultimate solution for transforming unstructured, uniquely formatted briefs into actionable, high-impact campaign strategies. It empowers marketing teams to generate AI-powered campaigns from start to finish, with full control over target audience segments and platform- or persona-specific social media content. Seamlessly bridge the gap between campaign strategy and creative execution, all in one intuitive workflow. ✨
----
+**Lea Beauty Campaign Generator** is the ultimate solution for transforming unstructured, uniquely formatted briefs into actionable, high-impact campaign strategies. It empowers marketing teams to generate **AI-powered campaigns from start to finish**, with full control over target audience segments and platform- or persona-specific social media content. Seamlessly bridge the gap between campaign strategy and creative execution, all in one intuitive workflow. ✨
 
 ## 🚀 Features
 
