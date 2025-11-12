@@ -2,15 +2,16 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Step2Content } from "@/components/steps/step2-content";
+import { Step3ImageLab } from "@/components/steps/step3-image-lab";
 import { StepLoader } from "@/components/step-loader";
 
-export default function Step2Page() {
+export default function Step3Page() {
   const params = useParams();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [campaignData, setCampaignData] = useState(null);
   const campaignId = params.id as string;
+  const audienceId = params.audienceId as string;
 
   useEffect(() => {
     const fetchCampaignData = async () => {
@@ -20,7 +21,7 @@ export default function Step2Page() {
         const data = await response.json();
         setCampaignData(data);
       } catch (error) {
-        console.error("[v0] Step 2 fetch error:", error);
+        console.error("[v0] Step 3 fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -32,30 +33,28 @@ export default function Step2Page() {
   const handleNext = async (data: any) => {
     setLoading(true);
     try {
-      console.log(data.content.id);
-      const response = await fetch(`/api/campaigns/${campaignId}/step3/${data.content.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) throw new Error("Save failed");
-
-      router.push(`/campaign/${campaignId}/step3/${data.content.id}`);
+      router.push(`/campaign/${campaignId}/step4`);
     } catch (error) {
-      console.error("[v0] Step 2 save error:", error);
+      console.error("[v0] Step 3 save error:", error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleBack = () => {
-    router.push(`/campaign/${campaignId}/step1`);
+    router.push(`/campaign/${campaignId}/step2`);
   };
 
   if (loading) {
-    return <StepLoader stepNumber={2} message="Loading campaign content and audience data..." />;
+    return <StepLoader stepNumber={3} message="Loading image optimization data..." />;
   }
 
-  return <Step2Content campaignData={campaignData || {}} onBack={handleBack} onNext={handleNext} />;
+  return (
+    <Step3ImageLab
+      campaignData={campaignData || {}}
+      onBack={handleBack}
+      selectedAudience={audienceId}
+      onNext={handleNext}
+    />
+  );
 }

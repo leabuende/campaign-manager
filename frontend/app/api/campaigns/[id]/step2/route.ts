@@ -1,91 +1,58 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const campaignId = params.id
+    const { id } = await params;
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    console.log(`[v0] Fetching campaign from ${API_BASE_URL}/campaigns/${id}`);
 
-    // Return mock campaign data with audience profiles
-    return NextResponse.json({
-      campaignId,
-      audiences: [
-        {
-          id: "aud-1",
-          name: "Women 25-35",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Discover the art of beauty. Transform your skin with our revolutionary formula.",
-              warning: "May contain language that could be perceived as exclusionary",
-              confidence_score: 0.78,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "Beauty that works for you. 30-second transformation challenge 💄✨",
-              confidence_score: 0.95,
-            },
-          },
-        },
-        {
-          id: "aud-2",
-          name: "Women 35-45",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Luxury meets science. Elevate your skincare routine.",
-              confidence_score: 0.88,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "Age is just a number. Join the beauty revolution.",
-              warning: "Consider alternative phrasing",
-              confidence_score: 0.82,
-            },
-          },
-        },
-        {
-          id: "aud-3",
-          name: "Beauty Enthusiasts",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Professional-grade formulation. Expert results.",
-              confidence_score: 0.92,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "The ultimate beauty hack you never knew you needed.",
-              confidence_score: 0.89,
-            },
-          },
-        },
-      ],
-    })
+    const response = await fetch(`${API_BASE_URL}/campaigns/${id}`, {
+      method: "GET",
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to fetch campaign: ${text}`);
+    }
+
+    const data = await response.json();
+    console.log(data.audiences[0].content);
+
+    return NextResponse.json(data);
   } catch (error) {
-    return NextResponse.json({ error: "Fetch failed" }, { status: 500 })
+    console.error("[v0] GET campaign error:", error);
+    return NextResponse.json({ error: "Fetch failed" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const campaignId = params.id
-    const data = await request.json()
+    const campaignId = params.id;
+    const { audience_id } = await request.json();
 
-    console.log("[v0] Saving content for campaign:", campaignId)
-    console.log("[v0] Audiences count:", data.audiences?.length)
+    console.log("[v0] Forwarding image generation request:", { campaignId, audience_id });
+    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-    // Simulate processing
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    const response = await fetch(`${API_BASE_URL}/campaigns/generate_images`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        campaign_id: campaignId,
+        audience_id,
+      }),
+    });
 
-    return NextResponse.json({
-      success: true,
-      campaignId,
-      audiencesUpdated: data.audiences?.length,
-    })
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`FastAPI responded with ${response.status}: ${text}`);
+    }
+
+    const result = await response.json();
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error("[v0] Step 2 API error:", error)
-    return NextResponse.json({ error: "Save failed" }, { status: 500 })
+    console.error("[v0] Step 3 API error:", error);
+    return NextResponse.json({ error: "Save failed" }, { status: 500 });
   }
 }

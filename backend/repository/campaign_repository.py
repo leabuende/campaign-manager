@@ -15,12 +15,12 @@ class CampaignRepository:
         self.collection = self._db[COLLECTION]
 
     async def create(self, campaign: CampaignCreate) -> dict:
+        print("hellooo here")
         doc = campaign.model_dump()
-        if not doc.get("id"):
-            doc["id"] = str(uuid.uuid4())
+        doc.pop("id", None)
 
         result = await self.collection.insert_one(doc)
-        doc["_id"] = result.inserted_id
+        doc["id"] = str(result.inserted_id)
         return doc
 
     async def list(self, skip: int = 0, limit: int = 50) -> List[dict]:

@@ -138,10 +138,12 @@ async def process_brief(
         content = aud.get("content", {})
         instagram = content.get("instagramCaption", {})
         tikTok = content.get("tikTokCaption", {})
+        website = content.get("websiteCaption", {})
 
         audience_content = Content(
             instagramCaption=instagram,
             tikTokCaption=tikTok,
+            websiteCaption=website,
         )
 
         files = []
@@ -161,7 +163,8 @@ async def process_brief(
         date=datetime.utcnow(),
     )
     campaign = await repo.create(payload)
-    campaign_id = str(campaign.get("_id") or campaign.get("id"))
+    print("campaign created:", campaign)
+    campaign_id = str(campaign.get("id"))
 
     campaign_dir = os.path.join(TEMP_FOLDER, name)
     os.makedirs(campaign_dir, exist_ok=True)
@@ -185,9 +188,7 @@ async def generate_images(
     repo: CampaignRepository = Depends(get_repo),
 ):
     try:
-        shared_path = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "../../shared/uploads")
-        )
+        shared_path = os.getenv("UPLOADS_PATH", "/app/uploads")
 
         campaign = await repo.get_by_id(request_data.campaign_id)
         if campaign is None:
@@ -210,8 +211,20 @@ async def generate_images(
         cutout_path = os.path.join(shared_path, request_data.campaign_id, "cutout.png")
         remove_product_background(image_path, cutout_path)
         output_path = os.path.join(shared_path, request_data.campaign_id, "generated")
+        os.makedirs(output_path, exist_ok=True)
         image_paths = generate_final_images(
             cutout_path, output_path, request_data.audience_id, prompt
+        )
+        audience = next(
+            (a for a in campaign["audiences"] if a["id"] == request_data.audience_id),
+            None,
+        )
+        if not audience:
+            raise HTTPException(status_code=404, detail="Audience not found")
+
+        audience["images"] = image_paths
+        await repo.update(
+            request_data.campaign_id, {"audiences": campaign["audiences"]}
         )
 
         return {"images": image_paths}

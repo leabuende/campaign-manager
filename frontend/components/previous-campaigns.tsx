@@ -1,152 +1,176 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Folder, ChevronRight, FileText, ImageIcon, Download } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect } from "react";
+import { Folder, ChevronRight, ImageIcon, FileText, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 interface CampaignFile {
-  id: string
-  name: string
-  type: "image" | "text"
-  content?: string
-  url?: string
+  id: string;
+  name: string;
+  type: "image" | "text";
+  content?: string;
+  url?: string;
 }
 
 interface Campaign {
-  id: string
-  name: string
-  date: string
-  files: CampaignFile[]
+  id: string;
+  name: string;
+  date: string;
+  description?: string;
   metrics: {
-    reach: number
-    roi: number
-    audienceMatch: number
-  }
+    reach: number;
+    roi: number;
+    audienceMatch: number;
+  };
 }
 
-const SAMPLE_CAMPAIGNS: Campaign[] = [
-  {
-    id: "camp-001",
-    name: "Summer Collection 2025",
-    date: "Nov 15, 2025",
-    files: [
-      {
-        id: "f1",
-        name: "hero_image_1x1.png",
-        type: "image",
-        url: "/luxury-beauty-product.jpg",
-      },
-      {
-        id: "f2",
-        name: "hero_image_3x4.png",
-        type: "image",
-        url: "/luxury-beauty-product.jpg",
-      },
-      {
-        id: "f3",
-        name: "campaign_brief.txt",
-        type: "text",
-        content:
-          "Target audiences: Women 25-45\nTheme: Summer luxury collection\nKey message: Natural beauty enhancement",
-      },
-    ],
-    metrics: { reach: 125000, roi: 340, audienceMatch: 92 },
-  },
-  {
-    id: "camp-002",
-    name: "Luxury Line Launch",
-    date: "Nov 8, 2025",
-    files: [
-      {
-        id: "f4",
-        name: "luxury_pack_1x1.png",
-        type: "image",
-        url: "/luxury-packaging.jpg",
-      },
-      {
-        id: "f5",
-        name: "campaign_brief.txt",
-        type: "text",
-        content: "Premium product launch\nTarget: Luxury seekers aged 35+\nBudget: High-end positioning",
-      },
-    ],
-    metrics: { reach: 89000, roi: 285, audienceMatch: 88 },
-  },
-]
+interface UploadFolder {
+  id: string;
+  name: string;
+  files: CampaignFile[];
+}
 
 export function PreviousCampaigns() {
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(SAMPLE_CAMPAIGNS[0])
-  const [expandedFolders, setExpandedFolders] = useState<string[]>(["camp-001"])
-  const [selectedFile, setSelectedFile] = useState<CampaignFile | null>(SAMPLE_CAMPAIGNS[0].files[0])
-  const [metrics, setMetrics] = useState<Record<string, any>>({})
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [folders, setFolders] = useState<UploadFolder[]>([]);
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
+  const [expandedFolders, setExpandedFolders] = useState<string[]>([]);
+  const [selectedFile, setSelectedFile] = useState<CampaignFile | null>(null);
+  const [metrics, setMetrics] = useState<Record<string, number>>({});
 
   const toggleFolder = (campaignId: string) => {
     setExpandedFolders((prev) =>
       prev.includes(campaignId) ? prev.filter((id) => id !== campaignId) : [...prev, campaignId],
-    )
-  }
+    );
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch campaigns
+        const resCampaigns = await fetch("/api/campaigns");
+        const jsonCampaigns = await resCampaigns.json();
+        if (!jsonCampaigns.success) return;
+        const campaignsData: Campaign[] = jsonCampaigns.data;
+
+        // Fetch upload folders
+        const resFolders = await fetch("/api/campaigns/images");
+        const jsonFolders = await resFolders.json();
+        if (!jsonFolders.success) return;
+        const foldersData: UploadFolder[] = jsonFolders.data.map((f: any) => {
+          // flatten subfolders inside campaign folder
+          const files: CampaignFile[] = [];
+          f.files.forEach((file: any) => {
+            // if file is a folder, add its content
+            if (file.url.endsWith("/")) return; // skip folders for now
+            files.push({ id: file.name, name: file.name, type: "image", url: file.url });
+          });
+          return { ...f, files };
+        });
+
+        // Only keep campaigns with folders
+        const filteredCampaigns = campaignsData.filter((c) =>
+          foldersData.some((f) => f.id === c.id),
+        );
+
+        setCampaigns(filteredCampaigns);
+        setFolders(foldersData);
+
+        if (filteredCampaigns.length > 0) {
+          const firstCampaign = filteredCampaigns[0];
+          setSelectedCampaign(firstCampaign);
+          const folder = foldersData.find((f) => f.id === firstCampaign.id);
+          if (folder && folder.files.length > 0) {
+            setSelectedFile(folder.files[0]);
+          }
+          setMetrics({
+            reach: firstCampaign.metrics?.reach || 0,
+            roi: firstCampaign.metrics?.roi || 0,
+            audienceMatch: firstCampaign.metrics?.audienceMatch || 0,
+          });
+          setExpandedFolders([firstCampaign.id]);
+        }
+      } catch (err) {
+        console.error("Error fetching campaigns or uploads:", err);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="h-full flex overflow-hidden">
-      {/* Left Panel - Campaign Tree */}
+      {/* Left Panel */}
       <div className="w-80 border-r border-border bg-card overflow-y-auto">
         <div className="p-6 border-b border-border">
           <h1 className="text-2xl font-light tracking-wide">Previous Campaigns</h1>
-          <p className="text-xs text-muted-foreground mt-2">View and manage your campaign history</p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Only campaigns with uploaded content are shown
+          </p>
         </div>
 
         <div className="p-4 space-y-2">
-          {SAMPLE_CAMPAIGNS.map((campaign) => (
-            <div key={campaign.id}>
-              {/* Campaign Folder */}
-              <button
-                onClick={() => {
-                  toggleFolder(campaign.id)
-                  setSelectedCampaign(campaign)
-                  setSelectedFile(campaign.files[0])
-                }}
-                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
-                  selectedCampaign?.id === campaign.id
-                    ? "bg-accent/10 border border-accent"
-                    : "hover:bg-muted border border-transparent"
-                }`}
-              >
-                <ChevronRight
-                  className={`w-4 h-4 transition-transform ${expandedFolders.includes(campaign.id) ? "rotate-90" : ""}`}
-                />
-                <Folder className="w-4 h-4 text-accent" />
-                <div className="flex-1 text-left">
-                  <p className="text-sm font-medium text-foreground">{campaign.name}</p>
-                  <p className="text-xs text-muted-foreground">{campaign.date}</p>
-                </div>
-              </button>
+          {campaigns.map((campaign) => {
+            const folder = folders.find((f) => f.id === campaign.id);
+            if (!folder) return null;
 
-              {/* Campaign Files */}
-              {expandedFolders.includes(campaign.id) && (
-                <div className="ml-4 mt-1 space-y-1 border-l border-border">
-                  {campaign.files.map((file) => (
-                    <button
-                      key={file.id}
-                      onClick={() => setSelectedFile(file)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 rounded transition-all text-left ml-2 ${
-                        selectedFile?.id === file.id
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                      }`}
-                    >
-                      {file.type === "image" ? (
+            return (
+              <div key={campaign.id}>
+                {/* Campaign Folder */}
+                <button
+                  onClick={() => {
+                    toggleFolder(campaign.id);
+                    setSelectedCampaign(campaign);
+                    if (folder.files.length > 0) setSelectedFile(folder.files[0]);
+                    setMetrics({
+                      reach: campaign.metrics?.reach || 0,
+                      roi: campaign.metrics?.roi || 0,
+                      audienceMatch: campaign.metrics?.audienceMatch || 0,
+                    });
+                  }}
+                  className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-all ${
+                    selectedCampaign?.id === campaign.id
+                      ? "bg-accent/10 border border-accent"
+                      : "hover:bg-muted border border-transparent"
+                  }`}
+                >
+                  <ChevronRight
+                    className={`w-4 h-4 transition-transform ${
+                      expandedFolders.includes(campaign.id) ? "rotate-90" : ""
+                    }`}
+                  />
+                  <Folder className="w-4 h-4 text-accent" />
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium text-foreground">{campaign.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(campaign.date).toLocaleDateString()}
+                    </p>
+                  </div>
+                </button>
+
+                {/* Campaign Images */}
+                {expandedFolders.includes(campaign.id) && (
+                  <div className="ml-4 mt-1 grid grid-cols-1 gap-2 border-l border-border p-2">
+                    {folder.files.map((file) => (
+                      <button
+                        key={file.id}
+                        onClick={() => setSelectedFile(file)}
+                        className={`w-full flex items-center gap-2 px-2 py-1 rounded transition-all text-left ${
+                          selectedFile?.id === file.id
+                            ? "bg-accent text-accent-foreground"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                        }`}
+                      >
                         <ImageIcon className="w-4 h-4 flex-shrink-0" />
-                      ) : (
-                        <FileText className="w-4 h-4 flex-shrink-0" />
-                      )}
-                      <span className="text-sm truncate">{file.name}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                        <span className="text-sm truncate">{file.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -162,7 +186,7 @@ export function PreviousCampaigns() {
                 {selectedFile.type === "image" && selectedFile.url ? (
                   <div className="bg-muted rounded-lg overflow-hidden border border-border">
                     <img
-                      src={selectedFile.url || "/placeholder.svg"}
+                      src={selectedFile.url}
                       alt={selectedFile.name}
                       className="w-full h-auto max-h-96 object-cover"
                     />
@@ -197,62 +221,54 @@ export function PreviousCampaigns() {
             </div>
 
             <div className="p-6 space-y-6">
-              {/* Reach */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-2">Reach</label>
+                <label className="text-xs font-semibold text-muted-foreground block mb-2">
+                  Reach
+                </label>
                 <Input
                   type="number"
                   placeholder="e.g., 125000"
-                  defaultValue={selectedCampaign.metrics.reach}
-                  onChange={(e) =>
-                    setMetrics({
-                      ...metrics,
-                      reach: Number.parseInt(e.target.value) || 0,
-                    })
-                  }
+                  value={metrics.reach || 0}
+                  onChange={(e) => setMetrics({ ...metrics, reach: parseInt(e.target.value) || 0 })}
                   className="bg-input text-foreground border-border text-sm"
                 />
               </div>
 
-              {/* ROI */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-2">ROI (%)</label>
+                <label className="text-xs font-semibold text-muted-foreground block mb-2">
+                  ROI (%)
+                </label>
                 <Input
                   type="number"
                   placeholder="e.g., 340"
-                  defaultValue={selectedCampaign.metrics.roi}
-                  onChange={(e) =>
-                    setMetrics({
-                      ...metrics,
-                      roi: Number.parseInt(e.target.value) || 0,
-                    })
-                  }
+                  value={metrics.roi || 0}
+                  onChange={(e) => setMetrics({ ...metrics, roi: parseInt(e.target.value) || 0 })}
                   className="bg-input text-foreground border-border text-sm"
                 />
               </div>
 
-              {/* Audience Match */}
               <div>
-                <label className="text-xs font-semibold text-muted-foreground block mb-2">Audience Match (%)</label>
+                <label className="text-xs font-semibold text-muted-foreground block mb-2">
+                  Audience Match (%)
+                </label>
                 <Input
                   type="number"
                   placeholder="e.g., 92"
-                  defaultValue={selectedCampaign.metrics.audienceMatch}
+                  value={metrics.audienceMatch || 0}
                   onChange={(e) =>
-                    setMetrics({
-                      ...metrics,
-                      audienceMatch: Number.parseInt(e.target.value) || 0,
-                    })
+                    setMetrics({ ...metrics, audienceMatch: parseInt(e.target.value) || 0 })
                   }
                   className="bg-input text-foreground border-border text-sm"
                 />
               </div>
 
-              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">Save Metrics</Button>
+              <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+                Save Metrics
+              </Button>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

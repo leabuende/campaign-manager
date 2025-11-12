@@ -1,20 +1,20 @@
-"use client"
+"use client";
 
-import { CheckCircle, Rocket } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { CheckCircle, Rocket } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Step4ConfirmationProps {
-  campaignData: any
-  onBack: () => void
+  campaignData: any;
+  onBack: () => void;
 }
 
 export function Step4Confirmation({ campaignData, onBack }: Step4ConfirmationProps) {
   const handleLaunch = () => {
-    alert("Campaign launched successfully! Campaign ID: " + campaignData.campaignId)
-  }
+    alert("Campaign launched successfully! Campaign ID: " + campaignData.campaignId);
+  };
 
   return (
-    <div className="max-w-2xl mx-auto text-center py-12">
+    <div className="max-w-2xl mx-auto text-center py-12 px-6">
       <div className="mb-8">
         <div className="flex justify-center mb-6">
           <div className="w-20 h-20 bg-accent/10 rounded-full flex items-center justify-center">
@@ -22,7 +22,9 @@ export function Step4Confirmation({ campaignData, onBack }: Step4ConfirmationPro
           </div>
         </div>
         <h1 className="text-4xl font-light tracking-wide mb-3">Campaign Ready</h1>
-        <p className="text-lg text-muted-foreground">Your campaign is optimized and ready to go live</p>
+        <p className="text-lg text-muted-foreground">
+          Your campaign is optimized and ready to go live
+        </p>
       </div>
 
       {/* Summary */}
@@ -44,7 +46,9 @@ export function Step4Confirmation({ campaignData, onBack }: Step4ConfirmationPro
 
           <div className="flex items-start justify-between pb-4 border-b border-border">
             <span className="text-muted-foreground">Product Images</span>
-            <span className="font-medium text-foreground">{campaignData.productImages?.length || 0} images</span>
+            <span className="font-medium text-foreground">
+              {campaignData.productImages?.length || 0} images
+            </span>
           </div>
 
           <div className="flex items-start justify-between">
@@ -77,10 +81,13 @@ export function Step4Confirmation({ campaignData, onBack }: Step4ConfirmationPro
         >
           Back to Images
         </Button>
-        <Button onClick={handleLaunch} className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 flex-1">
+        <Button
+          onClick={handleLaunch}
+          className="bg-accent text-accent-foreground hover:bg-accent/90 px-8 flex-1"
+        >
           Launch Campaign
         </Button>
       </div>
     </div>
-  )
+  );
 }

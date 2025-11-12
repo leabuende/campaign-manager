@@ -1,63 +1,67 @@
-import { type NextRequest, NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Simulated API delay
-    await new Promise((resolve) => setTimeout(resolve, 800))
+    const res = await fetch(`${API_BASE_URL}/campaigns`);
+    if (!res.ok) {
+      throw new Error(`Backend responded with status ${res.status}`);
+    }
 
-    const campaigns = [
-      {
-        id: "camp-001",
-        name: "Summer Collection 2025",
-        date: "Nov 15, 2025",
-        files: [
-          {
-            id: "f1",
-            name: "hero_image_1x1.png",
-            type: "image",
-            url: "/luxury-beauty-product.jpg",
-          },
-          {
-            id: "f2",
-            name: "hero_image_3x4.png",
-            type: "image",
-            url: "/luxury-beauty-product.jpg",
-          },
-          {
-            id: "f3",
-            name: "campaign_brief.txt",
-            type: "text",
-            content:
-              "Target audiences: Women 25-45\nTheme: Summer luxury collection\nKey message: Natural beauty enhancement",
-          },
-        ],
-        metrics: { reach: 125000, roi: 340, audienceMatch: 92 },
-      },
-      {
-        id: "camp-002",
-        name: "Luxury Line Launch",
-        date: "Nov 8, 2025",
-        files: [
-          {
-            id: "f4",
-            name: "luxury_pack_1x1.png",
-            type: "image",
-            url: "/luxury-packaging.jpg",
-          },
-          {
-            id: "f5",
-            name: "campaign_brief.txt",
-            type: "text",
-            content: "Premium product launch\nTarget: Luxury seekers aged 35+\nBudget: High-end positioning",
-          },
-        ],
-        metrics: { reach: 89000, roi: 285, audienceMatch: 88 },
-      },
-    ]
+    const data = await res.json();
 
-    return NextResponse.json({ success: true, data: campaigns })
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error("[v0] Error fetching campaigns:", error)
-    return NextResponse.json({ success: false, error: "Failed to fetch campaigns" }, { status: 500 })
+    console.error("[v0] Error fetching campaigns:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch campaigns" },
+      { status: 500 },
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const formData = await request.formData();
+
+    const brief = formData.get("brief") as File;
+    const productImages = formData.getAll("productImages") as File[];
+    const name = formData.get("name")?.toString() || `Campaign`;
+    const description = formData.get("description")?.toString() || "";
+
+    if (!brief || productImages.length === 0) {
+      return NextResponse.json({ error: "Missing files" }, { status: 400 });
+    }
+
+    // Prepare data for FastAPI request
+    const apiFormData = new FormData();
+    apiFormData.append("pdf", brief);
+    apiFormData.append("image", productImages[0]); // send only first image (or loop if needed)
+    apiFormData.append("name", name);
+    apiFormData.append("description", description);
+
+    console.log("[v0] Sending to FastAPI:", `${API_BASE_URL}/campaigns/process_brief`);
+
+    // Call your FastAPI endpoint
+    const response = await fetch(`${API_BASE_URL}/campaigns/process_brief`, {
+      method: "POST",
+      body: apiFormData,
+    });
+
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`FastAPI request failed: ${text}`);
+    }
+
+    const result = await response.json();
+
+    return NextResponse.json({
+      success: true,
+      apiResponse: result,
+      processedAt: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error("[v0] Step 1 API error:", error);
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

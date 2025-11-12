@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import { Sparkles, FolderOpen, Package, ChevronLeft } from "lucide-react"
+import { Sparkles, FolderOpen, Package, ChevronLeft } from "lucide-react";
 
 interface SidebarProps {
-  activeSection: string
-  onSectionChange: (section: string) => void
-  isOpen: boolean
-  onToggle: () => void
+  activeSection: string;
+  onSectionChange: (section: string) => void;
+  isOpen: boolean;
+  onToggle: () => void;
 }
 
 export function Sidebar({ activeSection, onSectionChange, isOpen, onToggle }: SidebarProps) {
@@ -26,15 +26,19 @@ export function Sidebar({ activeSection, onSectionChange, isOpen, onToggle }: Si
       label: "Brand Assets",
       icon: Package,
     },
-  ]
+  ];
 
   return (
-    <aside className={`border-r border-border bg-sidebar flex flex-col transition-all ${isOpen ? "w-64" : "w-20"}`}>
+    <aside
+      className={`border-r border-border bg-sidebar flex flex-col transition-all ${isOpen ? "w-64" : "w-20"}`}
+    >
       {/* Header */}
       <div className="p-6 border-b border-sidebar-border flex items-center justify-between">
         {isOpen && (
           <div>
-            <div className="text-2xl font-light tracking-wider text-sidebar-foreground">L'Oreal</div>
+            <div className="text-2xl font-light tracking-wider text-sidebar-foreground">
+              Lea Beauty
+            </div>
             <p className="text-xs text-sidebar-foreground/60 mt-2">Campaign Studio</p>
           </div>
         )}
@@ -51,8 +55,8 @@ export function Sidebar({ activeSection, onSectionChange, isOpen, onToggle }: Si
       <nav className="flex-1 p-4">
         <ul className="space-y-2">
           {items.map((item) => {
-            const Icon = item.icon
-            const isActive = activeSection === item.id
+            const Icon = item.icon;
+            const isActive = activeSection === item.id;
             return (
               <li key={item.id}>
                 <button
@@ -68,7 +72,7 @@ export function Sidebar({ activeSection, onSectionChange, isOpen, onToggle }: Si
                   {isOpen && <span className="text-sm font-medium">{item.label}</span>}
                 </button>
               </li>
-            )
+            );
           })}
         </ul>
       </nav>
@@ -76,9 +80,9 @@ export function Sidebar({ activeSection, onSectionChange, isOpen, onToggle }: Si
       {/* Footer */}
       {isOpen && (
         <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/60">
-          <p>© 2025 L'Oreal</p>
+          <p>© 2025 Lea Beauty</p>
         </div>
       )}
     </aside>
-  )
+  );
 }

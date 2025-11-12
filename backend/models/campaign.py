@@ -14,6 +14,7 @@ class Caption(BaseModel):
 class Content(BaseModel):
     instagramCaption: Optional[Caption] = None
     tikTokCaption: Optional[Caption] = None
+    websiteCaption: Optional[Caption] = None
 
 
 class FileItem(BaseModel):
@@ -28,7 +29,7 @@ class Audience(BaseModel):
     id: str
     name: str
     content: Optional[Content] = None
-    files: Optional[List[FileItem]] = []
+    images: Optional[List[str]] = []
 
 
 class Metrics(BaseModel):

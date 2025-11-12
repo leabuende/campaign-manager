@@ -1,93 +1,52 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { AlertCircle, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { ProgressStep } from "../progress-step"
+import { useState, useEffect } from "react";
+import { AlertCircle, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { ProgressStep } from "../progress-step";
 
 interface ContentField {
-  label: string
-  value: string
-  warning?: string
-  confidence_score?: number
+  label: string;
+  value: string;
+  warning?: string;
+  confidence_score?: number;
 }
 
 interface AudienceProfile {
-  id: string
-  name: string
-  content: Record<string, ContentField>
+  id: string;
+  name: string;
+  content: Record<string, ContentField>;
 }
 
 interface Step2ContentProps {
-  campaignData: any
-  onBack: () => void
-  onNext: (data: any) => void
+  campaignData: any;
+  onBack: () => void;
+  onNext: (data: any) => void;
 }
 
 export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps) {
-  const [audiences, setAudiences] = useState<AudienceProfile[]>([])
-  const [activeTab, setActiveTab] = useState<string>("")
-
+  const [audiences, setAudiences] = useState<AudienceProfile[]>([]);
+  const [activeTab, setActiveTab] = useState<string>("");
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const initialAudiences: AudienceProfile[] = [
-        {
-          id: "aud-1",
-          name: "Women 25-35",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Discover the art of beauty. Transform your skin with our revolutionary formula.",
-              warning: "May contain language that could be perceived as exclusionary",
-              confidence_score: 0.78,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "Beauty that works for you. 30-second transformation challenge 💄✨",
-              confidence_score: 0.95,
-            },
-          },
-        },
-        {
-          id: "aud-2",
-          name: "Women 35-45",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Luxury meets science. Elevate your skincare routine.",
-              confidence_score: 0.88,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "Age is just a number. Join the beauty revolution.",
-              warning: "Consider alternative phrasing",
-              confidence_score: 0.82,
-            },
-          },
-        },
-        {
-          id: "aud-3",
-          name: "Beauty Enthusiasts",
-          content: {
-            instagramCaption: {
-              label: "Instagram Caption",
-              value: "Professional-grade formulation. Expert results.",
-              confidence_score: 0.92,
-            },
-            tikTokCaption: {
-              label: "TikTok Caption",
-              value: "The ultimate beauty hack you never knew you needed.",
-              confidence_score: 0.89,
-            },
-          },
-        },
-      ]
-      setAudiences(initialAudiences)
-      setActiveTab(initialAudiences[0].id)
-    }, 600)
-    return () => clearTimeout(timer)
-  }, [])
+    if (!campaignData || !campaignData.audiences) return;
+
+    const mappedAudiences: AudienceProfile[] = campaignData.audiences.map((audience: any) => ({
+      id: audience.id,
+      name: audience.name,
+      content: audience.content
+        ? {
+            instagramCaption: audience.content.instagramCaption || undefined,
+            tikTokCaption: audience.content.tikTokCaption || undefined,
+            websiteCaption: audience.content.websiteCaption || undefined,
+          }
+        : undefined,
+      images: audience.images || [],
+    }));
+
+    setAudiences(mappedAudiences);
+    if (mappedAudiences.length > 0) setActiveTab(mappedAudiences[0].id);
+  }, [campaignData]);
 
   const handleContentChange = (audienceId: string, fieldKey: string, value: string) => {
     setAudiences(
@@ -102,8 +61,8 @@ export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps
             }
           : aud,
       ),
-    )
-  }
+    );
+  };
 
   const handleAddProfile = () => {
     const newProfile: AudienceProfile = {
@@ -121,18 +80,18 @@ export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps
           confidence_score: 0.5,
         },
       },
-    }
-    setAudiences([...audiences, newProfile])
-    setActiveTab(newProfile.id)
-  }
+    };
+    setAudiences([...audiences, newProfile]);
+    setActiveTab(newProfile.id);
+  };
 
-  const activeAudience = audiences.find((a) => a.id === activeTab)
+  const activeAudience = audiences.find((a) => a.id === activeTab);
 
   return (
-    <div className="max-w-4xl">
+    <div className="max-w-4xl p-6">
       <ProgressStep
         stepNumber={2}
-        title="Content Details"
+        title="Content Details test"
         description="Edit and review campaign content per audience"
       />
 
@@ -171,7 +130,9 @@ export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps
             <div key={key} className="bg-card rounded-lg p-6 border border-border">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex-1">
-                  <label className="block text-sm font-semibold text-foreground mb-1">{field.label}</label>
+                  <label className="block text-sm font-semibold text-foreground mb-1">
+                    {field.label}
+                  </label>
                   <div className="flex items-center gap-2 text-xs">
                     <span className="text-muted-foreground">AI Confidence:</span>
                     <div className="w-24 h-1.5 bg-border rounded-full overflow-hidden">
@@ -182,7 +143,9 @@ export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps
                         }}
                       />
                     </div>
-                    <span className="text-muted-foreground">{Math.round((field.confidence_score || 0) * 100)}%</span>
+                    <span className="text-muted-foreground">
+                      {Math.round((field.confidence_score || 0) * 100)}%
+                    </span>
                   </div>
                 </div>
               </div>
@@ -228,5 +191,5 @@ export function Step2Content({ campaignData, onBack, onNext }: Step2ContentProps
         </Button>
       </div>
     </div>
-  )
+  );
 }

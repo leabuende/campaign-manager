@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   mongo:
     image: mongo:7.0
@@ -10,34 +12,43 @@ services:
     environment:
       MONGO_INITDB_DATABASE: campaigns_db
 
+  qdrant:
+    image: qdrant/qdrant:v1.10.0
+    container_name: qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
   backend:
     build:
       context: ../backend
-      dockerfile: backend.Dockerfile
+      dockerfile: ../shared/backend.Dockerfile
     container_name: fastapi-backend
     restart: always
     ports:
       - "8001:8001"
     volumes:
-      - uploads_data:/app/uploads
+      - ../shared/uploads:/app/uploads
     environment:
       - MONGO_URI=mongodb://mongo:27017
       - DB_NAME=campaigns_db
-      - UPLOADS_PATH=/app/uploads
+      - QDRANT_URL=http://qdrant:6333
+      - GEMINI_API_KEY=
     depends_on:
       - mongo
+      - qdrant
 
   frontend:
     build:
       context: ../frontend
-      dockerfile: frontend.Dockerfile
+      dockerfile: ../shared/frontend.Dockerfile
     container_name: next-frontend
     restart: always
     volumes:
-      - uploads_data:/usr/src/app/public/uploads
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8001
-      - NEXT_PUBLIC_UPLOADS_PATH=/uploads
+      - ../shared/uploads:/app/uploads
     ports:
       - "3000:3000"
     depends_on:
@@ -45,4 +56,4 @@ services:
 
 volumes:
   mongo_data:
-  uploads_data:
+  qdrant_storage:

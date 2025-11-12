@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState } from "react"
-import { Upload, FileText, ImageIcon, File } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { useState } from "react";
+import { Upload, FileText, ImageIcon, File } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Asset {
-  id: string
-  name: string
-  type: "logo" | "description" | "pdf" | "image"
-  uploadDate: string
+  id: string;
+  name: string;
+  type: "logo" | "description" | "pdf" | "image";
+  uploadDate: string;
 }
 
 const SAMPLE_ASSETS: Asset[] = [
   {
     id: "1",
-    name: "L'Oreal Logo - Primary",
+    name: "Lea Beauty Logo - Primary",
     type: "logo",
     uploadDate: "Nov 1, 2025",
   },
@@ -27,31 +27,31 @@ const SAMPLE_ASSETS: Asset[] = [
     type: "pdf",
     uploadDate: "Oct 28, 2025",
   },
-]
+];
 
 export function BrandAssets() {
-  const [assets, setAssets] = useState<Asset[]>(SAMPLE_ASSETS)
+  const [assets, setAssets] = useState<Asset[]>(SAMPLE_ASSETS);
   const [description, setDescription] = useState(
-    "L'Oreal is a global beauty company committed to innovation and sustainable beauty. Our mission is to offer all women and men across the world the best of what beauty can be.",
-  )
-  const [editingDescription, setEditingDescription] = useState(false)
+    "Lea Beauty is a global beauty company committed to innovation and sustainable beauty. Our mission is to offer all women and men across the world the best of what beauty can be.",
+  );
+  const [editingDescription, setEditingDescription] = useState(false);
 
   const getAssetIcon = (type: Asset["type"]) => {
     switch (type) {
       case "logo":
-        return <ImageIcon className="w-5 h-5" />
+        return <ImageIcon className="w-5 h-5" />;
       case "pdf":
-        return <FileText className="w-5 h-5" />
+        return <FileText className="w-5 h-5" />;
       case "image":
-        return <ImageIcon className="w-5 h-5" />
+        return <ImageIcon className="w-5 h-5" />;
       default:
-        return <File className="w-5 h-5" />
+        return <File className="w-5 h-5" />;
     }
-  }
+  };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, type: string) => {
-    e.preventDefault()
-    const files = Array.from(e.dataTransfer.files)
+    e.preventDefault();
+    const files = Array.from(e.dataTransfer.files);
     files.forEach((file) => {
       setAssets([
         ...assets,
@@ -65,20 +65,22 @@ export function BrandAssets() {
             year: "numeric",
           }),
         },
-      ])
-    })
-  }
+      ]);
+    });
+  };
 
   const triggerFileInput = (inputId: string) => {
-    document.getElementById(inputId)?.click()
-  }
+    document.getElementById(inputId)?.click();
+  };
 
   return (
     <div className="h-full overflow-auto">
       <div className="p-8">
         <div className="mb-8">
           <h1 className="text-3xl font-light tracking-wide mb-2">Brand Assets</h1>
-          <p className="text-muted-foreground">Manage your logos, guidelines, and brand materials</p>
+          <p className="text-muted-foreground">
+            Manage your logos, guidelines, and brand materials
+          </p>
         </div>
 
         <div className="grid grid-cols-3 gap-6 mb-8">
@@ -108,7 +110,9 @@ export function BrandAssets() {
           >
             <FileText className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
             <h2 className="text-lg font-medium mb-2">Brand Guidelines</h2>
-            <p className="text-sm text-muted-foreground mb-4">Upload PDF documents and guidelines</p>
+            <p className="text-sm text-muted-foreground mb-4">
+              Upload PDF documents and guidelines
+            </p>
             <input type="file" accept=".pdf" className="hidden" id="guidelines-input" />
             <div className="inline-flex items-center gap-2 text-accent text-sm pointer-events-none">
               <Upload className="w-4 h-4" />
@@ -198,5 +202,5 @@ export function BrandAssets() {
         </div>
       </div>
     </div>
-  )
+  );
 }

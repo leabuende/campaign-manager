@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
 export default function CampaignLayout({
   children,
   params,
 }: {
-  children: React.ReactNode
-  params: { id: string }
+  children: React.ReactNode;
+  params: { id: string };
 }) {
-  return <>{children}</>
+  return <>{children}</>;
 }

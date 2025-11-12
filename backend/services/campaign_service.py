@@ -53,6 +53,7 @@ For EACH target audience segment:
 - Generate tailored social media content:
   * Instagram Caption: Create an engaging, platform-appropriate caption. Include a warning if the language could be perceived as exclusionary. Provide a confidence score (0-1) based on how well it fits the audience.
   * TikTok Caption: Create a short, trendy caption with emojis. Provide a confidence score (0-1).
+  * Website Caption: Create a concise, informative caption for a website. Provide a confidence score (0-1).
 
 Make the content creative, diverse, and platform-appropriate. Ensure each audience segment has distinct messaging."""
 
@@ -66,15 +67,12 @@ Make the content creative, diverse, and platform-appropriate. Ensure each audien
             },
         )
 
-        # Parse and validate response using Pydantic
         campaign_analysis = CampaignAnalysis.model_validate_json(response.text)
 
-        # Convert to dict for return
         return campaign_analysis.model_dump()
 
     except Exception as e:
         print(f"Gemini API Error: {e}")
-        # Return fallback structure
         return {
             "campaign_description": f"Error processing campaign brief: {str(e)}",
             "product_description": "N/A",
@@ -148,9 +146,11 @@ def generate_final_images(
                     os.makedirs(os.path.dirname(output_path), exist_ok=True)
                     image = part.as_image()
                     image.save(image_output_path)
+                    paths.append(image_output_path)
                     print(
                         f"Saved image for aspect ratio {ratio} at: {image_output_path}"
                     )
+                    # TODO: Add update to database for audience
 
     return paths
 
