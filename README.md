@@ -1,4 +1,4 @@
-# Lea Beauty Campaign Generator
+## Lea Beauty Campaign Generator
 
 ![Screenshot](./screenshot.png)
 
