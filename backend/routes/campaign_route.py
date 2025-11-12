@@ -12,6 +12,7 @@ from fastapi import (
     Form,
     HTTPException,
     Query,
+    Request,
     UploadFile,
     status,
 )
@@ -22,15 +23,20 @@ from models.campaign import (
     CampaignUpdate,
     Content,
 )
+from pydantic import BaseModel
 from repository.campaign_repository import CampaignRepository
 from services.campaign_service import (
     extract_text_from_pdf,
+    generate_background_prompt,
+    generate_final_images,
+    modify_image_with_gemini,
     process_pdf_text,
-    save_uploaded_image,
+    remove_product_background,
 )
 
-TEMP_FOLDER = "/tmp/campaign_uploads"
+SHARED_UPLOADS = os.getenv("UPLOAD_FOLDER", "../../shared/uploads")
 
+TEMP_FOLDER = "/tmp/campaign_uploads"
 router = APIRouter(prefix="/campaigns", tags=["campaigns"])
 
 
@@ -119,13 +125,11 @@ async def process_brief(
 
     try:
         pdf_text = extract_text_from_pdf(pdf_path)
-        print("pdf text : ", pdf_text)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Failed to read PDF: {e}")
 
     try:
         processed_data = await process_pdf_text(pdf_text)
-        print("processed data : ", processed_data)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"AI processing failed: {e}")
 
@@ -159,11 +163,85 @@ async def process_brief(
     campaign = await repo.create(payload)
     campaign_id = str(campaign.get("_id") or campaign.get("id"))
 
-    campaign_dir = os.path.join(TEMP_FOLDER, campaign_id)
+    campaign_dir = os.path.join(TEMP_FOLDER, name)
     os.makedirs(campaign_dir, exist_ok=True)
-    image_path = os.path.join(campaign_dir, image.filename)
+    image_path = os.path.join(campaign_dir, "_initial.png")
     with open(image_path, "wb") as f:
         shutil.copyfileobj(image.file, f)
 
     campaign["id"] = campaign_id
     return CampaignOut(**campaign)
+
+
+class GenerateImagesRequest(BaseModel):
+    campaign_id: str
+    audience_id: str
+
+
+@router.post("/generate_images")
+async def generate_images(
+    request_data: GenerateImagesRequest,
+    request: Request,
+    repo: CampaignRepository = Depends(get_repo),
+):
+    try:
+        shared_path = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "../../shared/uploads")
+        )
+
+        campaign = await repo.get_by_id(request_data.campaign_id)
+        if campaign is None:
+            raise HTTPException(status_code=404, detail="Campaign not found")
+        audience_name = next(
+            (
+                a["name"]
+                for a in campaign["audiences"]
+                if a["id"] == request_data.audience_id
+            ),
+            "",
+        )
+        campaign_description = campaign["description"]
+        prompt = await generate_background_prompt(
+            repo, campaign_description, audience_name
+        )
+        campaign_dir = os.path.join(TEMP_FOLDER, campaign["name"])
+        image_path = os.path.join(campaign_dir, "_initial.png")
+
+        cutout_path = os.path.join(shared_path, request_data.campaign_id, "cutout.png")
+        remove_product_background(image_path, cutout_path)
+        output_path = os.path.join(shared_path, request_data.campaign_id, "generated")
+        image_paths = generate_final_images(
+            cutout_path, output_path, request_data.audience_id, prompt
+        )
+
+        return {"images": image_paths}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class UpdateImageRequest(BaseModel):
+    image_path: str
+    modification_prompt: str
+
+
+@router.post("/update_image")
+async def update_image(
+    request_data: UpdateImageRequest,
+    request: Request,
+):
+    try:
+        if not os.path.exists(request_data.image_path):
+            raise HTTPException(
+                status_code=404, detail=f"Image not found: {request_data.image_path}"
+            )
+
+        modified_image_path = modify_image_with_gemini(
+            image_path=request_data.image_path,
+            modification_prompt=request_data.modification_prompt,
+        )
+
+        return {"modified_image": modified_image_path}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

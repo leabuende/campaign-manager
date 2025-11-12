@@ -1,14 +1,22 @@
 import os
-import shutil
-import tempfile
-from typing import Any, Dict
+import re
+from typing import Any, Dict, List
 
 from google import genai
+from google.genai import types
 from models.campaign import CampaignAnalysis
+from PIL import Image
 from PyPDF2 import PdfReader
+from rembg import remove
+from repository.campaign_repository import CampaignRepository
 
 TEMP_FOLDER = "/tmp/campaign_uploads"
 os.makedirs(TEMP_FOLDER, exist_ok=True)
+
+client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+BASE_DIR = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "../../shared/uploads")
+)
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
@@ -49,8 +57,6 @@ For EACH target audience segment:
 Make the content creative, diverse, and platform-appropriate. Ensure each audience segment has distinct messaging."""
 
     try:
-        client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
-
         response = client.models.generate_content(
             model="gemini-2.0-flash-exp",
             contents=prompt,
@@ -77,11 +83,105 @@ Make the content creative, diverse, and platform-appropriate. Ensure each audien
         }
 
 
-def save_uploaded_image(image_file, campaign_id: str, filename: str) -> str:
-    """Save uploaded image to a temp folder named by campaign ID."""
-    campaign_dir = os.path.join(TEMP_FOLDER, campaign_id)
-    os.makedirs(campaign_dir, exist_ok=True)
-    image_path = os.path.join(campaign_dir, filename)
-    with open(image_path, "wb") as f:
-        shutil.copyfileobj(image_file, f)
+async def generate_background_prompt(
+    campaign_repo: CampaignRepository, campaign_description: str, audience_name: str
+) -> str:
+    prompt_text = (
+        f"Generate a detailed, realistic background description for a product photoshoot "
+        f"for the campaign: '{campaign_description}' and the audience: '{audience_name}'. "
+        f"The background should fit the product and campaign tone, and could include settings, materials, "
+        f"lighting, and colors (e.g., white marble, dramatic cinematic lighting, soft natural light, sand, water, urban setting). "
+        f"Focus on creating a visually striking but simple and professional scene that highlights the product. "
+        f"No humans should be displayed in the scene; the composition should be fully focused on the product. "
+        f"Keep it concise and descriptive, suitable for an AI image generation prompt."
+    )
+
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-exp",
+        contents=prompt_text,
+    )
+
+    background_prompt = response.text
+    return background_prompt
+
+
+def remove_product_background(input_path: str, output_path: str) -> str:
+    """Removes the background from the product image using rembg."""
+    with Image.open(input_path) as img:
+        output_image = remove(img, only_mask=False)
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        output_image.save(output_path)
+    return output_path
+
+
+def generate_final_images(
+    product_path: str,
+    output_path: str,
+    audience_id: str,
+    prompt: str,
+) -> List[str]:
+    """Generates AI images using Gemini with the cut-out product and following prompt:
+    context"""
+    paths = []
+
+    aspect_ratios = ["1:1", "3:4", "9:16"]
+
+    with Image.open(product_path) as product_img:
+        for ratio in aspect_ratios:
+            final_prompt = f"Generate a ad from a professional photoshoot, based on the product given, and the following instructions: {prompt}"
+
+            response = client.models.generate_content(
+                model="gemini-2.5-flash-image",
+                contents=[final_prompt, product_img],
+                config=types.GenerateContentConfig(
+                    image_config=types.ImageConfig(aspect_ratio=ratio)
+                    # TODO: Add person not allowed parameter, not sure if compatible with gen_content
+                ),
+            )
+
+            for part in response.parts:
+                if part.inline_data is not None:
+                    image_output_path = os.path.join(
+                        output_path,
+                        f"generated_{audience_id}_{ratio.replace(':', 'x')}.png",
+                    )
+                    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+                    image = part.as_image()
+                    image.save(image_output_path)
+                    print(
+                        f"Saved image for aspect ratio {ratio} at: {image_output_path}"
+                    )
+
+    return paths
+
+
+def modify_image_with_gemini(
+    image_path: str,
+    modification_prompt: str,
+) -> str:
+    filename = os.path.basename(image_path)
+    match = re.search(r"_(\d+x\d+)\.png$", filename)
+    if match:
+        aspect_ratio = match.group(1).replace("x", ":")
+    else:
+        aspect_ratio = "1:1"
+
+    final_prompt = f"""Apply the following instructions carefully while preserving the original style, product and composition : {modification_prompt}
+        Do not add any additional text or elements to the image, and do not apply any dramatic differences."""
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash-image",
+        contents=[final_prompt, image_path],
+        config=types.GenerateContentConfig(
+            image_config=types.ImageConfig(aspect_ratio=aspect_ratio)
+        ),
+    )
+
+    for part in response.parts:
+        if part.inline_data is not None:
+            part.as_image().save(image_path)
+            break
+    else:
+        raise ValueError("No image was generated by Gemini for the modification.")
+
     return image_path
